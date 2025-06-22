@@ -9,7 +9,110 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          token_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          token_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          token_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      tokens: {
+        Row: {
+          created_at: string | null
+          creator_wallet: string
+          description: string | null
+          freeze_authority: string | null
+          id: string
+          image_url: string | null
+          initial_liquidity: number | null
+          market_cap: number | null
+          mint_address: string | null
+          mint_authority: string | null
+          name: string
+          pool_address: string | null
+          supply: number | null
+          symbol: string
+          volume_24h: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_wallet: string
+          description?: string | null
+          freeze_authority?: string | null
+          id?: string
+          image_url?: string | null
+          initial_liquidity?: number | null
+          market_cap?: number | null
+          mint_address?: string | null
+          mint_authority?: string | null
+          name: string
+          pool_address?: string | null
+          supply?: number | null
+          symbol: string
+          volume_24h?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_wallet?: string
+          description?: string | null
+          freeze_authority?: string | null
+          id?: string
+          image_url?: string | null
+          initial_liquidity?: number | null
+          market_cap?: number | null
+          mint_address?: string | null
+          mint_authority?: string | null
+          name?: string
+          pool_address?: string | null
+          supply?: number | null
+          symbol?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
