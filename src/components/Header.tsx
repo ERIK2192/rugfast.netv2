@@ -2,54 +2,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
 
 export const Header = () => {
-  const { isAuthenticated, signInWithWallet, signOut, connected } = useAuth();
-
-  const handleAuthAction = async () => {
-    if (isAuthenticated) {
-      await signOut();
-    } else if (connected) {
-      await signInWithWallet();
-    }
-  };
-
   return (
-    <header className="bg-black border-b border-gray-800 px-4 py-3">
+    <header className="bg-gradient-to-r from-blue-900 to-blue-800 border-b border-cyan-500/20 px-4 py-4">
       <div className="container mx-auto flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-white">
-          <span className="text-green-400">Rug</span>Fast
+        <Link to="/" className="text-2xl font-bold">
+          <span className="text-cyan-400">RugFast</span>
         </Link>
         
-        <nav className="hidden md:flex space-x-6">
-          <Link to="/" className="text-gray-300 hover:text-green-400 transition-colors">
-            Home
-          </Link>
-          <Link to="/create" className="text-gray-300 hover:text-green-400 transition-colors">
+        <nav className="hidden md:flex space-x-8">
+          <Link to="/create" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">
             Create Token
           </Link>
-          <Link to="/discover" className="text-gray-300 hover:text-green-400 transition-colors">
-            Discover
-          </Link>
-          <Link to="/wallet" className="text-gray-300 hover:text-green-400 transition-colors">
+          <Link to="/wallet" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">
             My Tokens
           </Link>
         </nav>
 
-        <div className="flex items-center space-x-4">
-          <WalletMultiButton className="!bg-green-500 hover:!bg-green-600" />
-          {connected && (
-            <Button 
-              onClick={handleAuthAction}
-              variant={isAuthenticated ? "outline" : "default"}
-              className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
-            >
-              {isAuthenticated ? 'Sign Out' : 'Sign In'}
-            </Button>
-          )}
-        </div>
+        <WalletMultiButton className="!bg-cyan-500 hover:!bg-cyan-600 !text-black !font-semibold !rounded-lg" />
       </div>
     </header>
   );

@@ -1,155 +1,110 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TokenCard } from '@/components/TokenCard';
-import { supabase } from '@/integrations/supabase/client';
-import { Rocket, DollarSign, Shield } from 'lucide-react';
-import type { Tables } from '@/integrations/supabase/types';
-
-type Token = Tables<'tokens'>;
+import { Card, CardContent } from '@/components/ui/card';
 
 export const Landing = () => {
-  const [latestTokens, setLatestTokens] = useState<Token[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLatestTokens = async () => {
-      const { data, error } = await supabase
-        .from('tokens')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(8);
-
-      if (!error && data) {
-        setLatestTokens(data);
-      }
-      setLoading(false);
-    };
-
-    fetchLatestTokens();
-  }, []);
-
-  const features = [
-    {
-      icon: <DollarSign className="w-8 h-8 text-green-400" />,
-      title: "Lowest Fees",
-      description: "Only 0.25 SOL to launch vs 0.5 SOL elsewhere"
-    },
-    {
-      icon: <Rocket className="w-8 h-8 text-blue-400" />,
-      title: "Instant Trading",
-      description: "Immediate Raydium integration for seamless trading"
-    },
-    {
-      icon: <Shield className="w-8 h-8 text-purple-400" />,
-      title: "Token Management",
-      description: "Revoke freeze/mint authority and update metadata"
-    }
-  ];
+  const { connected } = useWallet();
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white">
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <h1 className="text-6xl font-bold mb-6">
-            Launch for <span className="text-green-400">0.25 SOL</span>
+      <div className="container mx-auto px-4 py-20">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            Create Your Own Coin FAST
           </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            The fastest and cheapest way to launch your memecoin on Solana. 
-            Instant Raydium integration with the lowest fees in the market.
+          <p className="text-xl md:text-2xl text-gray-300 mb-8">
+            Launch your own token on Solana in seconds. No coding required.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link to="/create">
-              <Button size="lg" className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4">
-                Create Token Now
-              </Button>
-            </Link>
-            <Link to="/discover">
-              <Button variant="outline" size="lg" className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black px-8 py-4">
-                Discover Tokens
-              </Button>
-            </Link>
-          </div>
-
-          {/* Pricing Comparison */}
-          <Card className="bg-gray-900 border-gray-700 max-w-4xl mx-auto mb-16">
-            <CardHeader>
-              <CardTitle className="text-2xl text-center">Why RugFast?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4 text-red-400">Other Platforms</h3>
-                  <div className="space-y-2 text-gray-300">
-                    <p>Launch Fee: <span className="text-red-400">0.5 SOL</span></p>
-                    <p>Trading Fee: <span className="text-red-400">1.0%</span></p>
-                    <p>Complex Process</p>
-                  </div>
+          {!connected ? (
+            <Card className="max-w-2xl mx-auto bg-gray-800/50 border-cyan-500/30 backdrop-blur-sm">
+              <CardContent className="p-8 text-center">
+                <p className="text-lg mb-4">Please connect your wallet to continue</p>
+                <div className="text-cyan-400 text-sm">
+                  Click "Select Wallet" in the top right corner
                 </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4 text-green-400">RugFast</h3>
-                  <div className="space-y-2 text-gray-300">
-                    <p>Launch Fee: <span className="text-green-400">0.25 SOL</span></p>
-                    <p>Trading Fee: <span className="text-green-400">0.5%</span></p>
-                    <p>Instant & Simple</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Features */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {features.map((feature, index) => (
-              <Card key={index} className="bg-gray-900 border-gray-700">
-                <CardContent className="pt-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-gray-400">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Latest Tokens */}
-      <section className="py-16 px-4 bg-gray-950">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Latest Tokens</h2>
-            <Link to="/discover">
-              <Button variant="outline" className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black">
-                View All
-              </Button>
-            </Link>
-          </div>
-          
-          {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-gray-900 rounded-lg p-6 animate-pulse">
-                  <div className="w-12 h-12 bg-gray-700 rounded-full mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-700 rounded w-2/3"></div>
-                </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {latestTokens.map((token) => (
-                <TokenCard key={token.id} token={token} />
-              ))}
-            </div>
+            <Link to="/create">
+              <Button 
+                size="lg" 
+                className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-12 py-6 text-xl rounded-xl"
+              >
+                Create Token
+              </Button>
+            </Link>
           )}
         </div>
-      </section>
+
+        {/* How to use section */}
+        <Card className="max-w-4xl mx-auto bg-gray-800/30 border-cyan-500/20 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <h2 className="text-3xl font-bold text-cyan-400 mb-6">How to use Solana Token Creator</h2>
+            <p className="text-lg mb-6 text-gray-300">Follow these simple steps:</p>
+            
+            <ol className="space-y-4 text-left text-gray-300">
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">1.</span>
+                Connect your Solana wallet.
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">2.</span>
+                Write the name you want for your Token.
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">3.</span>
+                Write the symbol (max 8 characters)
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">4.</span>
+                Upload the image for your token (max 5MB)
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">5.</span>
+                Select the decimals quantity (9 is usually used for meme tokens).
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">6.</span>
+                Type in the total supply your token should have.
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">7.</span>
+                Write the description you want for your SPL Token.
+              </li>
+              <li className="flex items-start">
+                <span className="text-cyan-400 font-bold mr-3">8.</span>
+                Click on Create, accept the transaction, and wait until your token is ready.
+              </li>
+            </ol>
+
+            <div className="mt-8 p-6 bg-gray-700/50 rounded-lg">
+              <p className="text-gray-300 mb-2">
+                The cost of creating a regular Token is <span className="text-cyan-400 font-bold">0.25 SOL</span>, which includes all fees needed for the SPL Token creation.
+              </p>
+              <p className="text-gray-300">
+                The creation process will start and will take some seconds. After that, you will receive the total supply of the token in the wallet you chose.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Legal Disclaimer */}
+      <div className="border-t border-gray-700 bg-gray-900/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-xs text-gray-400 max-w-6xl mx-auto leading-relaxed">
+            RugFast.net is a token creation platform that allows users to generate Solana-based tokens instantly, with no coding required. RugFast.net does not issue, endorse, manage, or provide liquidity for any tokens created using our service. We do not provide financial advice, investment recommendations, or guarantees of value, price, or returns on any tokens. Tokens created on RugFast.net are not securities, and users are solely responsible for ensuring compliance with applicable laws and regulations in their jurisdiction. RugFast.net does not facilitate token trading, fundraising, or liquidity provision. By using RugFast.net, you acknowledge that creating and managing tokens carry significant risks, including loss of funds, market volatility, and regulatory uncertainty. RugFast.net is provided "as is" without warranties of any kind. We are not responsible for any outcomes related to the use of our platform. By using RugFast.net, you accept full responsibility for your actions and any consequences that may arise. Always conduct your own due diligence before engaging with any token or project.
+          </div>
+          <div className="text-center mt-4 text-gray-500 text-xs">
+            © 2025 RugFast | All Rights Reserved
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

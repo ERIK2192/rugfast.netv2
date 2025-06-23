@@ -8,8 +8,6 @@ import { AppWalletProvider } from "./components/WalletProvider";
 import { Header } from "./components/Header";
 import { Landing } from "./pages/Landing";
 import { CreateToken } from "./pages/CreateToken";
-import { Discover } from "./pages/Discover";
-import { TokenDetail } from "./pages/TokenDetail";
 import { Wallet } from "./pages/Wallet";
 import NotFound from "./pages/NotFound";
 
@@ -22,13 +20,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-black">
+          <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900">
             <Header />
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/create" element={<CreateToken />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/token/:id" element={<TokenDetail />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
