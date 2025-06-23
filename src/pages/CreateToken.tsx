@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,16 +22,34 @@ export const CreateToken = () => {
     name: '',
     symbol: '',
     description: '',
-    initialLiquidity: 1,
+    supply: 1000000000,
+    decimals: 9,
+    revokeMint: true,
+    revokeFreeze: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Calculate total cost
+  const calculateCost = () => {
+    let cost = 0.15; // Base cost
+    if (formData.revokeMint) cost += 0.05;
+    if (formData.revokeFreeze) cost += 0.05;
+    return cost;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'initialLiquidity' ? parseFloat(value) || 0 : value
+      [name]: ['supply', 'decimals'].includes(name) ? parseInt(value) || 0 : value
+    }));
+  };
+
+  const handleCheckboxChange = (name: 'revokeMint' | 'revokeFreeze') => (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
     }));
   };
 
@@ -100,12 +119,11 @@ export const CreateToken = () => {
           symbol: formData.symbol,
           description: formData.description,
           image_url: imageUrl,
-          initial_liquidity: formData.initialLiquidity,
+          supply: formData.supply,
           // These would be set by the actual Solana token creation process
           mint_address: `mock-${Date.now()}`,
-          pool_address: `pool-${Date.now()}`,
-          freeze_authority: walletAddress,
-          mint_authority: walletAddress,
+          freeze_authority: formData.revokeFreeze ? null : walletAddress,
+          mint_authority: formData.revokeMint ? null : walletAddress,
         })
         .select()
         .single();
@@ -114,7 +132,7 @@ export const CreateToken = () => {
 
       toast({
         title: "Token Created Successfully!",
-        description: `${formData.name} (${formData.symbol}) has been launched`,
+        description: `${formData.name} (${formData.symbol}) has been launched for ${calculateCost()} SOL`,
       });
 
       navigate(`/token/${data.id}`);
@@ -148,8 +166,8 @@ export const CreateToken = () => {
       <div className="container mx-auto max-w-2xl">
         <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Create Your Token</CardTitle>
-            <p className="text-center text-gray-400">Launch fee: 0.25 SOL</p>
+            <CardTitle className="text-2xl text-center gradient-text">Create Your Token</CardTitle>
+            <p className="text-center text-gray-400">Launch fee: {calculateCost()} SOL</p>
           </CardHeader>
           
           <CardContent>
@@ -183,6 +201,37 @@ export const CreateToken = () => {
                 </div>
               </div>
 
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="supply" className="text-white">Total Supply *</Label>
+                  <Input
+                    id="supply"
+                    name="supply"
+                    type="number"
+                    min="1"
+                    value={formData.supply}
+                    onChange={handleInputChange}
+                    className="bg-gray-800 border-gray-600 text-white"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="decimals" className="text-white">Decimals *</Label>
+                  <Input
+                    id="decimals"
+                    name="decimals"
+                    type="number"
+                    min="0"
+                    max="9"
+                    value={formData.decimals}
+                    onChange={handleInputChange}
+                    className="bg-gray-800 border-gray-600 text-white"
+                    required
+                  />
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="description" className="text-white">Description</Label>
                 <Textarea
@@ -203,40 +252,52 @@ export const CreateToken = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="bg-gray-800 border-gray-600 text-white file:bg-green-500 file:text-black"
+                  className="bg-gray-800 border-gray-600 text-white file:bg-cyan-500 file:text-black"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="initialLiquidity" className="text-white">Initial Liquidity (SOL)</Label>
-                <Input
-                  id="initialLiquidity"
-                  name="initialLiquidity"
-                  type="number"
-                  step="0.1"
-                  min="0.1"
-                  value={formData.initialLiquidity}
-                  onChange={handleInputChange}
-                  className="bg-gray-800 border-gray-600 text-white"
-                />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Revoke Options</h3>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="revokeMint"
+                    checked={formData.revokeMint}
+                    onCheckedChange={handleCheckboxChange('revokeMint')}
+                  />
+                  <Label htmlFor="revokeMint" className="text-white">
+                    Revoke Mint Authority (+0.05 SOL)
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="revokeFreeze"
+                    checked={formData.revokeFreeze}
+                    onCheckedChange={handleCheckboxChange('revokeFreeze')}
+                  />
+                  <Label htmlFor="revokeFreeze" className="text-white">
+                    Revoke Freeze Authority (+0.05 SOL)
+                  </Label>
+                </div>
               </div>
 
               <div className="border border-gray-600 rounded-lg p-4 bg-gray-800">
-                <h3 className="font-semibold mb-2">Token Details:</h3>
+                <h3 className="font-semibold mb-2 text-white">Cost Breakdown:</h3>
                 <ul className="text-sm text-gray-300 space-y-1">
-                  <li>• Supply: 1,000,000,000 tokens</li>
-                  <li>• Decimals: 9</li>
-                  <li>• Network: Solana</li>
-                  <li>• Trading: Immediate on Raydium</li>
+                  <li>• Base token creation: 0.15 SOL</li>
+                  {formData.revokeMint && <li>• Revoke Mint Authority: +0.05 SOL</li>}
+                  {formData.revokeFreeze && <li>• Revoke Freeze Authority: +0.05 SOL</li>}
+                  <li className="font-semibold text-cyan-400">• Total: {calculateCost()} SOL</li>
                 </ul>
               </div>
 
               <Button
                 type="submit"
                 disabled={creating || !isAuthenticated}
-                className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3"
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3"
               >
-                {creating ? 'Creating Token...' : 'Launch for 0.25 SOL'}
+                {creating ? 'Creating Token...' : `Launch for ${calculateCost()} SOL`}
               </Button>
               
               {!isAuthenticated && (
