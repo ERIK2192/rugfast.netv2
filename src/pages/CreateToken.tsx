@@ -26,6 +26,7 @@ export const CreateToken = () => {
     decimals: 9,
     revokeMint: true,
     revokeFreeze: true,
+    revokeMetadata: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
@@ -35,6 +36,7 @@ export const CreateToken = () => {
     let cost = 0.15; // Base cost
     if (formData.revokeMint) cost += 0.05;
     if (formData.revokeFreeze) cost += 0.05;
+    if (formData.revokeMetadata) cost += 0.05;
     return cost;
   };
 
@@ -46,7 +48,7 @@ export const CreateToken = () => {
     }));
   };
 
-  const handleCheckboxChange = (name: 'revokeMint' | 'revokeFreeze') => (checked: boolean) => {
+  const handleCheckboxChange = (name: 'revokeMint' | 'revokeFreeze' | 'revokeMetadata') => (checked: boolean) => {
     setFormData(prev => ({
       ...prev,
       [name]: checked
@@ -269,6 +271,7 @@ export const CreateToken = () => {
                     Revoke Mint Authority (+0.05 SOL)
                   </Label>
                 </div>
+                <p className="text-sm text-gray-400 ml-6">Controls the ability to mint new tokens. Revoking ensures no additional tokens can be created.</p>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -280,6 +283,19 @@ export const CreateToken = () => {
                     Revoke Freeze Authority (+0.05 SOL)
                   </Label>
                 </div>
+                <p className="text-sm text-gray-400 ml-6">Controls the ability to freeze token accounts. Revoking prevents the token issuer from freezing user wallets.</p>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="revokeMetadata"
+                    checked={formData.revokeMetadata}
+                    onCheckedChange={handleCheckboxChange('revokeMetadata')}
+                  />
+                  <Label htmlFor="revokeMetadata" className="text-white">
+                    Revoke Metadata Authority (+0.05 SOL)
+                  </Label>
+                </div>
+                <p className="text-sm text-gray-400 ml-6">Controls updates to token metadata (e.g., name, symbol, image via Metaplex). Revoking locks metadata, increasing trust by preventing changes post-launch.</p>
               </div>
 
               <div className="border border-gray-600 rounded-lg p-4 bg-gray-800">
@@ -288,6 +304,7 @@ export const CreateToken = () => {
                   <li>• Base token creation: 0.15 SOL</li>
                   {formData.revokeMint && <li>• Revoke Mint Authority: +0.05 SOL</li>}
                   {formData.revokeFreeze && <li>• Revoke Freeze Authority: +0.05 SOL</li>}
+                  {formData.revokeMetadata && <li>• Revoke Metadata Authority: +0.05 SOL</li>}
                   <li className="font-semibold text-cyan-400">• Total: {calculateCost()} SOL</li>
                 </ul>
               </div>
