@@ -49,10 +49,11 @@
 /* Gradient text utility with blue to purple fade */
 .gradient-text {
   background: linear-gradient(135deg, #3B82F6, #8B5CF6, #6366F1);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradient-shift 3s ease-in-out infinite;
+  animation: gradient-shift 4s ease-in-out infinite;
 }
 
 /* Background fade animation */
@@ -94,23 +95,58 @@
   opacity: 0.6 !important;
 }
 
-/* Enhanced fade effects for background */
+/* Enhanced fade effects for background - improved gradients */
 .fade-background {
   background: linear-gradient(180deg, 
-    rgba(30, 58, 138, 0.8) 0%,
-    rgba(67, 56, 202, 0.6) 25%,
-    rgba(79, 70, 229, 0.4) 50%,
-    rgba(99, 102, 241, 0.3) 75%,
-    rgba(0, 0, 0, 0.9) 100%
+    rgba(30, 58, 138, 0.95) 0%,
+    rgba(67, 56, 202, 0.85) 15%,
+    rgba(79, 70, 229, 0.75) 30%,
+    rgba(99, 102, 241, 0.65) 45%,
+    rgba(139, 92, 246, 0.55) 60%,
+    rgba(99, 102, 241, 0.45) 75%,
+    rgba(30, 58, 138, 0.35) 90%,
+    rgba(0, 0, 0, 0.95) 100%
   );
-  animation: background-fade 8s ease-in-out infinite;
+  background-size: 100% 200%;
+  animation: background-fade 12s ease-in-out infinite;
 }
 
 @keyframes background-fade {
-  0%, 100% {
-    opacity: 0.8;
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.9;
   }
-  50% {
+  25% {
+    background-position: 0% 25%;
     opacity: 1;
   }
+  50% {
+    background-position: 0% 50%;
+    opacity: 0.95;
+  }
+  75% {
+    background-position: 0% 75%;
+    opacity: 1;
+  }
+  100% {
+    background-position: 0% 100%;
+    opacity: 0.9;
+  }
+}
+
+/* Additional gradient overlay for more depth */
+.fade-background::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, 
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(139, 92, 246, 0.05) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
