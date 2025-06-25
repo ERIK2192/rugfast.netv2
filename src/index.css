@@ -56,6 +56,90 @@
   animation: gradient-shift 4s ease-in-out infinite;
 }
 
+/* Subtitle gradient for main text */
+.subtitle-gradient {
+  background: linear-gradient(135deg, #e2e8f0, #a78bfa, #60a5fa);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* Navigation link gradients */
+.nav-link-gradient {
+  background: linear-gradient(135deg, #cbd5e1, #a78bfa, #60a5fa);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 5s ease-in-out infinite;
+  position: relative;
+}
+
+.nav-link-gradient:hover {
+  background: linear-gradient(135deg, #ffffff, #c4b5fd, #93c5fd);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-link-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border-radius: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.nav-link-gradient:hover::before {
+  opacity: 1;
+}
+
+/* Create token button gradient */
+.create-token-button {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6, #6366f1) !important;
+  background-size: 200% 200% !important;
+  color: #000 !important;
+  border: none !important;
+  animation: gradient-shift 4s ease-in-out infinite;
+}
+
+.create-token-button:hover {
+  background: linear-gradient(135deg, #0891b2, #7c3aed, #4f46e5) !important;
+  background-size: 200% 200% !important;
+}
+
+/* Wallet button gradient */
+.wallet-button-gradient {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6, #6366f1) !important;
+  background-size: 200% 200% !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  transition: all 0.3s ease !important;
+  animation: gradient-shift 4s ease-in-out infinite;
+}
+
+.wallet-button-gradient:hover {
+  background: linear-gradient(135deg, #0891b2, #7c3aed, #4f46e5) !important;
+  background-size: 200% 200% !important;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+}
+
+.wallet-button-gradient:disabled {
+  opacity: 0.6 !important;
+}
+
 /* Background fade animation */
 @keyframes gradient-shift {
   0% {
@@ -74,25 +158,6 @@
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-}
-
-/* Wallet adapter button styles */
-.wallet-adapter-button {
-  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
-  color: #000 !important;
-  font-weight: 600 !important;
-  border-radius: 0.5rem !important;
-  border: none !important;
-  transition: all 0.2s ease !important;
-}
-
-.wallet-adapter-button:hover {
-  background: linear-gradient(135deg, #0891b2, #0e7490) !important;
-  transform: translateY(-1px);
-}
-
-.wallet-adapter-button:disabled {
-  opacity: 0.6 !important;
 }
 
 /* Enhanced full-page gradient background */

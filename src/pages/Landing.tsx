@@ -16,7 +16,7 @@ export const Landing = () => {
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
             <span className="gradient-text">Create Your Own Coin FAST</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8">
+          <p className="text-xl md:text-2xl mb-8 subtitle-gradient">
             Launch your own token on Solana in seconds. No coding required.
           </p>
           
@@ -31,10 +31,7 @@ export const Landing = () => {
             </Card>
           ) : (
             <Link to="/create">
-              <Button 
-                size="lg" 
-                className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-12 py-6 text-xl rounded-xl"
-              >
+              <Button className="create-token-button font-semibold px-12 py-6 text-xl rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl">
                 Create Token
               </Button>
             </Link>
