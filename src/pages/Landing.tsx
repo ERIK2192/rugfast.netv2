@@ -89,8 +89,11 @@ export const Landing = () => {
               <p className="text-gray-300 mb-2">
                 Revoke Freeze Authority: <span className="text-cyan-400 font-bold">+0.05 SOL</span>
               </p>
+              <p className="text-gray-300 mb-2">
+                Revoke Metadata Authority: <span className="text-cyan-400 font-bold">+0.05 SOL</span>
+              </p>
               <p className="text-gray-300 font-semibold">
-                Total with both revokes: <span className="text-cyan-400 font-bold">0.25 SOL</span>
+                Total with all revokes: <span className="text-cyan-400 font-bold">0.30 SOL</span>
               </p>
             </div>
           </CardContent>
