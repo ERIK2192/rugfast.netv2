@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,10 +10,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  Transaction, 
+  SystemProgram, 
+  LAMPORTS_PER_SOL, 
+  PublicKey 
+} from '@solana/web3.js';
 
 export const CreateToken = () => {
   const navigate = useNavigate();
-  const { connected } = useWallet();
+  const { connected, publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
   const { isAuthenticated, walletAddress } = useAuth();
   const { toast } = useToast();
   
@@ -31,6 +37,9 @@ export const CreateToken = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
+  // Fee wallet address (replace with your actual fee collection wallet)
+  const FEE_WALLET = new PublicKey('11111111111111111111111111111112'); // Replace with actual
+
   // Calculate total cost
   const calculateCost = () => {
     let cost = 0.15; // Base cost
@@ -42,9 +51,13 @@ export const CreateToken = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Sanitize inputs
+    const sanitizedValue = value.replace(/<[^>]*>/g, ''); // Remove HTML tags
+    
     setFormData(prev => ({
       ...prev,
-      [name]: ['supply', 'decimals'].includes(name) ? parseInt(value) || 0 : value
+      [name]: ['supply', 'decimals'].includes(name) ? parseInt(sanitizedValue) || 0 : sanitizedValue
     }));
   };
 
@@ -57,7 +70,17 @@ export const CreateToken = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      setImageFile(e.target.files[0]);
+      const file = e.target.files[0];
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Image must be smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFile(file);
     }
   };
 
@@ -83,10 +106,44 @@ export const CreateToken = () => {
     }
   };
 
+  const createPaymentTransaction = async (): Promise<string> => {
+    if (!publicKey) throw new Error('Wallet not connected');
+
+    const totalCostLamports = calculateCost() * LAMPORTS_PER_SOL;
+    
+    // Check user balance
+    const balance = await connection.getBalance(publicKey);
+    if (balance < totalCostLamports) {
+      throw new Error(`Insufficient SOL. Need ${calculateCost()} SOL, have ${balance / LAMPORTS_PER_SOL} SOL`);
+    }
+
+    // Create payment transaction
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: FEE_WALLET,
+        lamports: totalCostLamports,
+      })
+    );
+
+    // Get recent blockhash
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = publicKey;
+
+    // Send and confirm transaction
+    const signature = await sendTransaction(transaction, connection);
+    
+    // Wait for confirmation
+    await connection.confirmTransaction(signature, 'confirmed');
+    
+    return signature;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!connected || !isAuthenticated || !walletAddress) {
+    if (!connected || !isAuthenticated || !walletAddress || !publicKey) {
       toast({
         title: "Wallet Required",
         description: "Please connect and sign in with your wallet",
@@ -95,7 +152,8 @@ export const CreateToken = () => {
       return;
     }
 
-    if (!formData.name || !formData.symbol) {
+    // Validate inputs
+    if (!formData.name.trim() || !formData.symbol.trim()) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -104,45 +162,70 @@ export const CreateToken = () => {
       return;
     }
 
+    if (formData.symbol.length > 8) {
+      toast({
+        title: "Invalid Symbol",
+        description: "Symbol must be 8 characters or less",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCreating(true);
 
     try {
+      // Upload image if provided
       let imageUrl = null;
       if (imageFile) {
+        console.log('Uploading image...');
         imageUrl = await uploadImage(imageFile);
       }
 
-      // Create token in database (in real implementation, this would call a Solana edge function)
-      const { data, error } = await supabase
-        .from('tokens')
-        .insert({
-          creator_wallet: walletAddress,
-          name: formData.name,
-          symbol: formData.symbol,
-          description: formData.description,
-          image_url: imageUrl,
-          supply: formData.supply,
-          // These would be set by the actual Solana token creation process
-          mint_address: `mock-${Date.now()}`,
-          freeze_authority: formData.revokeFreeze ? null : walletAddress,
-          mint_authority: formData.revokeMint ? null : walletAddress,
-        })
-        .select()
-        .single();
+      // Create and send payment transaction
+      console.log('Creating payment transaction...');
+      const paymentSignature = await createPaymentTransaction();
+      console.log('Payment transaction confirmed:', paymentSignature);
+
+      // Call edge function to create actual token
+      console.log('Calling token creation edge function...');
+      const { data, error } = await supabase.functions.invoke('create-token', {
+        body: {
+          walletAddress: walletAddress,
+          tokenData: {
+            ...formData,
+            imageUrl
+          },
+          transactionSignature: paymentSignature
+        }
+      });
 
       if (error) throw error;
 
+      if (!data.success) {
+        throw new Error(data.error || 'Token creation failed');
+      }
+
       toast({
-        title: "Token Created Successfully!",
+        title: "Token Created Successfully! 🎉",
         description: `${formData.name} (${formData.symbol}) has been launched for ${calculateCost()} SOL`,
       });
 
-      navigate(`/token/${data.id}`);
+      console.log('Token created:', data.token);
+      navigate(`/token/${data.token.id}`);
+
     } catch (error) {
       console.error('Error creating token:', error);
+      
+      let errorMessage = 'Failed to create token. Please try again.';
+      if (error.message.includes('Insufficient SOL')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('Rate limit')) {
+        errorMessage = 'You can only create 1 token per minute. Please wait and try again.';
+      }
+      
       toast({
         title: "Creation Failed",
-        description: "Failed to create token. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -173,7 +256,17 @@ export const CreateToken = () => {
           </CardHeader>
           
           <CardContent>
+            {/* Critical Liquidity Warning */}
+            <div className="mb-6 p-4 bg-red-900/30 border border-red-500 rounded-lg">
+              <h3 className="text-red-400 font-bold text-lg mb-2">⚠️ IMPORTANT NOTICE</h3>
+              <p className="text-red-200">
+                This tool <strong>ONLY creates tokens</strong>. Liquidity must be added separately on Raydium. 
+                Your token will not be tradeable until you manually set up liquidity.
+              </p>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
+              
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name" className="text-white">Token Name *</Label>
@@ -184,6 +277,7 @@ export const CreateToken = () => {
                     onChange={handleInputChange}
                     placeholder="e.g. DogeCoin"
                     className="bg-gray-800 border-gray-600 text-white"
+                    maxLength={50}
                     required
                   />
                 </div>
@@ -211,6 +305,7 @@ export const CreateToken = () => {
                     name="supply"
                     type="number"
                     min="1"
+                    max="1000000000000"
                     value={formData.supply}
                     onChange={handleInputChange}
                     className="bg-gray-800 border-gray-600 text-white"
@@ -243,12 +338,13 @@ export const CreateToken = () => {
                   onChange={handleInputChange}
                   placeholder="Tell people about your token..."
                   className="bg-gray-800 border-gray-600 text-white"
+                  maxLength={500}
                   rows={4}
                 />
               </div>
 
               <div>
-                <Label htmlFor="image" className="text-white">Token Image</Label>
+                <Label htmlFor="image" className="text-white">Token Image (Max 5MB)</Label>
                 <Input
                   id="image"
                   type="file"
@@ -258,6 +354,7 @@ export const CreateToken = () => {
                 />
               </div>
 
+              
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Revoke Options</h3>
                 

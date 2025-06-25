@@ -8,8 +8,15 @@ import { clusterApiUrl } from '@solana/web3.js';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 export const AppWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  // Use mainnet for production, devnet for testing
   const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint = useMemo(() => {
+    // In production, use a reliable RPC endpoint
+    if (network === WalletAdapterNetwork.Mainnet) {
+      return 'https://api.mainnet-beta.solana.com';
+    }
+    return clusterApiUrl(network);
+  }, [network]);
 
   const wallets = useMemo(
     () => [
