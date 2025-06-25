@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { LoadingSteps } from '@/components/LoadingSteps';
+import { WalletConnectionStatus } from '@/components/WalletConnectionStatus';
 import { 
   Transaction, 
   SystemProgram, 
@@ -19,7 +21,7 @@ import {
 
 export const CreateToken = () => {
   const navigate = useNavigate();
-  const { connected, publicKey, sendTransaction } = useWallet();
+  const { connected, publicKey, sendTransaction, connecting } = useWallet();
   const { connection } = useConnection();
   const { isAuthenticated, walletAddress } = useAuth();
   const { toast } = useToast();
@@ -36,6 +38,13 @@ export const CreateToken = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+  const [creationSteps, setCreationSteps] = useState([
+    { id: 'payment', label: 'Processing payment', status: 'pending' as const },
+    { id: 'mint', label: 'Creating token mint', status: 'pending' as const },
+    { id: 'metadata', label: 'Setting up metadata', status: 'pending' as const },
+    { id: 'revokes', label: 'Revoking authorities', status: 'pending' as const },
+    { id: 'verification', label: 'Verifying on-chain', status: 'pending' as const },
+  ]);
 
   // Fee wallet address (replace with your actual fee collection wallet)
   const FEE_WALLET = new PublicKey('11111111111111111111111111111112'); // Replace with actual
@@ -140,6 +149,12 @@ export const CreateToken = () => {
     return signature;
   };
 
+  const updateStepStatus = (stepId: string, status: 'pending' | 'loading' | 'completed' | 'error') => {
+    setCreationSteps(prev => prev.map(step => 
+      step.id === stepId ? { ...step, status } : step
+    ));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -172,6 +187,9 @@ export const CreateToken = () => {
     }
 
     setCreating(true);
+    
+    // Reset steps
+    setCreationSteps(prev => prev.map(step => ({ ...step, status: 'pending' as const })));
 
     try {
       // Upload image if provided
@@ -181,12 +199,15 @@ export const CreateToken = () => {
         imageUrl = await uploadImage(imageFile);
       }
 
-      // Create and send payment transaction
+      // Step 1: Create and send payment transaction
+      updateStepStatus('payment', 'loading');
       console.log('Creating payment transaction...');
       const paymentSignature = await createPaymentTransaction();
       console.log('Payment transaction confirmed:', paymentSignature);
+      updateStepStatus('payment', 'completed');
 
-      // Call edge function to create actual token
+      // Step 2: Call edge function to create actual token
+      updateStepStatus('mint', 'loading');
       console.log('Calling token creation edge function...');
       const { data, error } = await supabase.functions.invoke('create-token', {
         body: {
@@ -205,10 +226,29 @@ export const CreateToken = () => {
         throw new Error(data.error || 'Token creation failed');
       }
 
+      updateStepStatus('mint', 'completed');
+      updateStepStatus('metadata', 'completed');
+      updateStepStatus('revokes', 'completed');
+      updateStepStatus('verification', 'completed');
+
       toast({
         title: "Token Created Successfully! 🎉",
         description: `${formData.name} (${formData.symbol}) has been launched for ${calculateCost()} SOL`,
       });
+
+      // Show verification status
+      if (data.token.verificationStatus) {
+        const { mintRevoked, freezeRevoked, metadataRevoked } = data.token.verificationStatus;
+        console.log('Verification Status:', { mintRevoked, freezeRevoked, metadataRevoked });
+        
+        if (formData.revokeMint && !mintRevoked) {
+          toast({
+            title: "Warning",
+            description: "Mint authority revocation could not be verified",
+            variant: "destructive",
+          });
+        }
+      }
 
       console.log('Token created:', data.token);
       navigate(`/token/${data.token.id}`);
@@ -216,11 +256,19 @@ export const CreateToken = () => {
     } catch (error) {
       console.error('Error creating token:', error);
       
+      // Update failed step
+      const currentStep = creationSteps.find(step => step.status === 'loading');
+      if (currentStep) {
+        updateStepStatus(currentStep.id, 'error');
+      }
+      
       let errorMessage = 'Failed to create token. Please try again.';
       if (error.message.includes('Insufficient SOL')) {
         errorMessage = error.message;
       } else if (error.message.includes('Rate limit')) {
         errorMessage = 'You can only create 1 token per minute. Please wait and try again.';
+      } else if (error.message.includes('Network timeout')) {
+        errorMessage = 'Network timeout detected. The system is retrying automatically.';
       }
       
       toast({
@@ -233,7 +281,7 @@ export const CreateToken = () => {
     }
   };
 
-  if (!connected) {
+  if (!connected && !connecting) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Card className="bg-gray-900 border-gray-700 max-w-md">
@@ -253,17 +301,28 @@ export const CreateToken = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-center gradient-text">Create Your Token</CardTitle>
             <p className="text-center text-gray-400">Launch fee: {calculateCost()} SOL</p>
+            <WalletConnectionStatus />
           </CardHeader>
           
           <CardContent>
-            {/* Critical Liquidity Warning */}
+            {/* Enhanced Liquidity Warning */}
             <div className="mb-6 p-4 bg-red-900/30 border border-red-500 rounded-lg">
-              <h3 className="text-red-400 font-bold text-lg mb-2">⚠️ IMPORTANT NOTICE</h3>
-              <p className="text-red-200">
-                This tool <strong>ONLY creates tokens</strong>. Liquidity must be added separately on Raydium. 
-                Your token will not be tradeable until you manually set up liquidity.
+              <h3 className="text-red-400 font-bold text-lg mb-2">⚠️ CRITICAL NOTICE</h3>
+              <p className="text-red-200 text-lg font-semibold mb-2">
+                <strong>Liquidity must be added separately on Raydium!</strong>
+              </p>
+              <p className="text-red-300">
+                This tool <strong>ONLY creates tokens</strong>. Your token will not be tradeable until you manually set up liquidity on Raydium DEX.
               </p>
             </div>
+
+            {/* Token Creation Progress */}
+            {creating && (
+              <div className="mb-6 p-4 bg-gray-800 border border-gray-600 rounded-lg">
+                <h3 className="text-white font-semibold mb-3">Creating Your Token...</h3>
+                <LoadingSteps steps={creationSteps} />
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               
@@ -408,17 +467,19 @@ export const CreateToken = () => {
 
               <Button
                 type="submit"
-                disabled={creating || !isAuthenticated}
+                disabled={creating || !isAuthenticated || connecting}
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3"
               >
-                {creating ? 'Creating Token...' : `Launch for ${calculateCost()} SOL`}
-              </Button>
-              
-              {!isAuthenticated && (
-                <p className="text-center text-red-400 text-sm">
-                  Please sign in with your wallet to create tokens
-                </p>
-              )}
+                {creating ? 'Creating Token...' : 
+               connecting ? 'Connecting Wallet...' :
+               `Launch for ${calculateCost()} SOL`}
+            </Button>
+            
+            {!isAuthenticated && !connecting && (
+              <p className="text-center text-red-400 text-sm">
+                Please sign in with your wallet to create tokens
+              </p>
+            )}
             </form>
           </CardContent>
         </Card>
