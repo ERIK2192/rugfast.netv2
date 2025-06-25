@@ -19,6 +19,12 @@ import {
   PublicKey 
 } from '@solana/web3.js';
 
+interface Step {
+  id: string;
+  label: string;
+  status: 'pending' | 'loading' | 'completed' | 'error';
+}
+
 export const CreateToken = () => {
   const navigate = useNavigate();
   const { connected, publicKey, sendTransaction, connecting } = useWallet();
@@ -38,12 +44,12 @@ export const CreateToken = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
-  const [creationSteps, setCreationSteps] = useState([
-    { id: 'payment', label: 'Processing payment', status: 'pending' as const },
-    { id: 'mint', label: 'Creating token mint', status: 'pending' as const },
-    { id: 'metadata', label: 'Setting up metadata', status: 'pending' as const },
-    { id: 'revokes', label: 'Revoking authorities', status: 'pending' as const },
-    { id: 'verification', label: 'Verifying on-chain', status: 'pending' as const },
+  const [creationSteps, setCreationSteps] = useState<Step[]>([
+    { id: 'payment', label: 'Processing payment', status: 'pending' },
+    { id: 'mint', label: 'Creating token mint', status: 'pending' },
+    { id: 'metadata', label: 'Setting up metadata', status: 'pending' },
+    { id: 'revokes', label: 'Revoking authorities', status: 'pending' },
+    { id: 'verification', label: 'Verifying on-chain', status: 'pending' },
   ]);
 
   // Fee wallet address (replace with your actual fee collection wallet)
@@ -263,12 +269,14 @@ export const CreateToken = () => {
       }
       
       let errorMessage = 'Failed to create token. Please try again.';
-      if (error.message.includes('Insufficient SOL')) {
-        errorMessage = error.message;
-      } else if (error.message.includes('Rate limit')) {
-        errorMessage = 'You can only create 1 token per minute. Please wait and try again.';
-      } else if (error.message.includes('Network timeout')) {
-        errorMessage = 'Network timeout detected. The system is retrying automatically.';
+      if (error instanceof Error) {
+        if (error.message.includes('Insufficient SOL')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Rate limit')) {
+          errorMessage = 'You can only create 1 token per minute. Please wait and try again.';
+        } else if (error.message.includes('Network timeout')) {
+          errorMessage = 'Network timeout detected. The system is retrying automatically.';
+        }
       }
       
       toast({
