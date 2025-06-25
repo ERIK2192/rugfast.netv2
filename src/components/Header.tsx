@@ -19,7 +19,7 @@ export const Header = () => {
             Trending tokens
           </button>
           <a 
-            href="https://raydium.io/liquidity/create" 
+            href="https://raydium.io/liquidity/create-pool/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link-gradient font-medium px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
@@ -27,7 +27,7 @@ export const Header = () => {
             Create liquidity
           </a>
           <a 
-            href="https://raydium.io/liquidity/manage" 
+            href="https://raydium.io/portfolio/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link-gradient font-medium px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
