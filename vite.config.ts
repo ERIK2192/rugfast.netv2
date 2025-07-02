@@ -35,6 +35,5 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['@solana/web3.js', '@solana/wallet-adapter-react'],
-    exclude: ['rpc-websockets'],
   }
 }));
