@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { 
@@ -159,7 +158,7 @@ serve(async (req) => {
       return conn;
     });
 
-    // Get fee wallet from Supabase Vault (secure storage)
+    // Get fee wallet from environment variable (your dedicated wallet's private key)
     const feeWalletSecret = Deno.env.get('FEE_WALLET_PRIVATE_KEY');
     if (!feeWalletSecret) {
       throw new Error('Fee wallet not configured');
@@ -170,7 +169,14 @@ serve(async (req) => {
     );
     const userWallet = new PublicKey(walletAddress);
 
+    console.log(`Fee wallet public key: ${feeWallet.publicKey.toBase58()}`);
     console.log('Creating SPL token with retry logic...');
+
+    // Verify the fee wallet matches expected address
+    const expectedFeeWallet = 'FTVkFUZRnQF7LxfNKE2dnCv4AJsMnMYUWYe3a6m1nwR7';
+    if (feeWallet.publicKey.toBase58() !== expectedFeeWallet) {
+      console.warn(`Fee wallet mismatch. Expected: ${expectedFeeWallet}, Got: ${feeWallet.publicKey.toBase58()}`);
+    }
 
     // Create the mint account with retry
     const mintKeypair = Keypair.generate();

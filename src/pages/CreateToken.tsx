@@ -53,8 +53,8 @@ export const CreateToken = () => {
     { id: 'verification', label: 'Verifying on-chain', status: 'pending' },
   ]);
 
-  // Fee wallet address (replace with your actual fee collection wallet)
-  const FEE_WALLET = new PublicKey('11111111111111111111111111111112'); // Replace with actual
+  // Fee wallet address (your dedicated RugFast.net wallet)
+  const FEE_WALLET = new PublicKey('FTVkFUZRnQF7LxfNKE2dnCv4AJsMnMYUWYe3a6m1nwR7');
 
   // Fixed flat fee of 0.25 SOL
   const FLAT_FEE_SOL = 0.25;
