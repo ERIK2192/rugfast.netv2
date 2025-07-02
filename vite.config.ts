@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: mode === 'production' ? ['rpc-websockets', 'rpc-websockets/dist/lib/client'] : undefined,
+      external: ['rpc-websockets', 'rpc-websockets/dist/lib/client'],
       output: {
         manualChunks: {
           'solana-web3': ['@solana/web3.js'],
