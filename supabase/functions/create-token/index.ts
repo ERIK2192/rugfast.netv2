@@ -41,6 +41,9 @@ interface CreateTokenRequest {
   transactionSignature: string;
 }
 
+// Fixed flat fee of 0.25 SOL
+const FLAT_FEE_SOL = 0.25;
+
 // Enhanced retry mechanism
 async function withRetry<T>(
   operation: () => Promise<T>,

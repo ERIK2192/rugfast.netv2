@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
@@ -55,14 +56,8 @@ export const CreateToken = () => {
   // Fee wallet address (replace with your actual fee collection wallet)
   const FEE_WALLET = new PublicKey('11111111111111111111111111111112'); // Replace with actual
 
-  // Calculate total cost
-  const calculateCost = () => {
-    let cost = 0.15; // Base cost
-    if (formData.revokeMint) cost += 0.05;
-    if (formData.revokeFreeze) cost += 0.05;
-    if (formData.revokeMetadata) cost += 0.05;
-    return cost;
-  };
+  // Fixed flat fee of 0.25 SOL
+  const FLAT_FEE_SOL = 0.25;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -124,12 +119,12 @@ export const CreateToken = () => {
   const createPaymentTransaction = async (): Promise<string> => {
     if (!publicKey) throw new Error('Wallet not connected');
 
-    const totalCostLamports = calculateCost() * LAMPORTS_PER_SOL;
+    const totalCostLamports = FLAT_FEE_SOL * LAMPORTS_PER_SOL;
     
     // Check user balance
     const balance = await connection.getBalance(publicKey);
     if (balance < totalCostLamports) {
-      throw new Error(`Insufficient SOL. Need ${calculateCost()} SOL, have ${balance / LAMPORTS_PER_SOL} SOL`);
+      throw new Error(`Insufficient SOL. Need ${FLAT_FEE_SOL} SOL, have ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
     // Create payment transaction
@@ -239,7 +234,7 @@ export const CreateToken = () => {
 
       toast({
         title: "Token Created Successfully! 🎉",
-        description: `${formData.name} (${formData.symbol}) has been launched for ${calculateCost()} SOL`,
+        description: `${formData.name} (${formData.symbol}) has been launched for ${FLAT_FEE_SOL} SOL`,
       });
 
       // Show verification status
@@ -308,7 +303,7 @@ export const CreateToken = () => {
         <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
             <CardTitle className="text-2xl text-center gradient-text">Create Your Token</CardTitle>
-            <p className="text-center text-gray-400">Launch fee: {calculateCost()} SOL</p>
+            <p className="text-center text-gray-400">Launch fee: {FLAT_FEE_SOL} SOL (flat rate)</p>
             <WalletConnectionStatus />
           </CardHeader>
           
@@ -423,7 +418,7 @@ export const CreateToken = () => {
 
               
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Revoke Options</h3>
+                <h3 className="text-lg font-semibold text-white">Security Options (Recommended)</h3>
                 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -432,10 +427,10 @@ export const CreateToken = () => {
                     onCheckedChange={handleCheckboxChange('revokeMint')}
                   />
                   <Label htmlFor="revokeMint" className="text-white">
-                    Revoke Mint Authority (+0.05 SOL)
+                    Revoke Mint Authority (Recommended)
                   </Label>
                 </div>
-                <p className="text-sm text-gray-400 ml-6">Controls the ability to mint new tokens. Revoking ensures no additional tokens can be created.</p>
+                <p className="text-sm text-gray-400 ml-6">Prevents creation of additional tokens, ensuring fixed supply and increasing trust.</p>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -444,10 +439,10 @@ export const CreateToken = () => {
                     onCheckedChange={handleCheckboxChange('revokeFreeze')}
                   />
                   <Label htmlFor="revokeFreeze" className="text-white">
-                    Revoke Freeze Authority (+0.05 SOL)
+                    Revoke Freeze Authority (Recommended)
                   </Label>
                 </div>
-                <p className="text-sm text-gray-400 ml-6">Controls the ability to freeze token accounts. Revoking prevents the token issuer from freezing user wallets.</p>
+                <p className="text-sm text-gray-400 ml-6">Prevents freezing of user wallets, ensuring tokens remain tradeable.</p>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -456,20 +451,17 @@ export const CreateToken = () => {
                     onCheckedChange={handleCheckboxChange('revokeMetadata')}
                   />
                   <Label htmlFor="revokeMetadata" className="text-white">
-                    Revoke Metadata Authority (+0.05 SOL)
+                    Revoke Metadata Authority (Recommended)
                   </Label>
                 </div>
-                <p className="text-sm text-gray-400 ml-6">Controls updates to token metadata (e.g., name, symbol, image via Metaplex). Revoking locks metadata, increasing trust by preventing changes post-launch.</p>
+                <p className="text-sm text-gray-400 ml-6">Locks token metadata (name, symbol, image), preventing post-launch changes and increasing trust.</p>
               </div>
 
               <div className="border border-gray-600 rounded-lg p-4 bg-gray-800">
-                <h3 className="font-semibold mb-2 text-white">Cost Breakdown:</h3>
+                <h3 className="font-semibold mb-2 text-white">Simple Flat Rate Pricing:</h3>
                 <ul className="text-sm text-gray-300 space-y-1">
-                  <li>• Base token creation: 0.15 SOL</li>
-                  {formData.revokeMint && <li>• Revoke Mint Authority: +0.05 SOL</li>}
-                  {formData.revokeFreeze && <li>• Revoke Freeze Authority: +0.05 SOL</li>}
-                  {formData.revokeMetadata && <li>• Revoke Metadata Authority: +0.05 SOL</li>}
-                  <li className="font-semibold text-cyan-400">• Total: {calculateCost()} SOL</li>
+                  <li className="font-semibold text-cyan-400">• Total: {FLAT_FEE_SOL} SOL (includes all features)</li>
+                  <li className="text-xs text-gray-400">• Token creation, metadata, and all revoke options included</li>
                 </ul>
               </div>
 
@@ -480,7 +472,7 @@ export const CreateToken = () => {
               >
                 {creating ? 'Creating Token...' : 
                connecting ? 'Connecting Wallet...' :
-               `Launch for ${calculateCost()} SOL`}
+               `Launch for ${FLAT_FEE_SOL} SOL`}
             </Button>
             
             {!isAuthenticated && !connecting && (
