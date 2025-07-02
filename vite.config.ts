@@ -25,7 +25,8 @@ export default defineConfig(({ mode }) => ({
       external: [
         'rpc-websockets', 
         'rpc-websockets/dist/lib/client',
-        'rpc-websockets/dist/lib/client/websocket.browser'
+        'rpc-websockets/dist/lib/client/websocket.browser',
+        'rpc-websockets/dist/lib/client.browser'
       ],
       output: {
         manualChunks: {
@@ -40,6 +41,6 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['@solana/web3.js', '@solana/wallet-adapter-react'],
-    exclude: ['rpc-websockets']
+    exclude: ['rpc-websockets', 'rpc-websockets/dist/lib/client', 'rpc-websockets/dist/lib/client/websocket.browser']
   }
 }));
