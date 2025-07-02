@@ -18,12 +18,12 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Fix all rpc-websockets import paths
-      "rpc-websockets/dist/lib/client": "rpc-websockets",
-      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets",
-      "rpc-websockets/dist/lib/client/websocket": "rpc-websockets",
-      "rpc-websockets/websocket.browser": "rpc-websockets",
-      "rpc-websockets/browser": "rpc-websockets",
+      // Fix all rpc-websockets import paths by mapping them to the correct locations
+      "rpc-websockets/dist/lib/client": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/dist/lib/client/websocket": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/websocket.browser": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/browser": "rpc-websockets/dist/lib/client.js",
     },
   },
   build: {
