@@ -18,8 +18,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "rpc-websockets/dist/lib/client": "rpc-websockets/dist/lib/client/websocket",
-      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets/dist/lib/client/websocket",
+      "rpc-websockets/dist/lib/client": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets/dist/lib/client.js",
+      "rpc-websockets/dist/lib/client/websocket": "rpc-websockets/dist/lib/client.js",
     },
   },
   build: {
