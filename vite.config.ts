@@ -18,10 +18,12 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Fix rpc-websockets imports by aliasing all problematic paths to the main package
+      // Fix all rpc-websockets import paths
       "rpc-websockets/dist/lib/client": "rpc-websockets",
       "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets",
       "rpc-websockets/dist/lib/client/websocket": "rpc-websockets",
+      "rpc-websockets/websocket.browser": "rpc-websockets",
+      "rpc-websockets/browser": "rpc-websockets",
     },
   },
   build: {
@@ -38,6 +40,7 @@ export default defineConfig(({ mode }) => ({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['@solana/web3.js', '@solana/wallet-adapter-react', 'rpc-websockets'],
+    include: ['@solana/web3.js', '@solana/wallet-adapter-react'],
+    exclude: ['rpc-websockets'],
   }
 }));
