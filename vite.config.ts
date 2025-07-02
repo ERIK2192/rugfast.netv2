@@ -19,16 +19,11 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "rpc-websockets/dist/lib/client": "rpc-websockets/dist/lib/client.browser",
+      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets/dist/lib/client/websocket.browser",
     },
   },
   build: {
     rollupOptions: {
-      external: [
-        'rpc-websockets', 
-        'rpc-websockets/dist/lib/client',
-        'rpc-websockets/dist/lib/client/websocket.browser',
-        'rpc-websockets/dist/lib/client.browser'
-      ],
       output: {
         manualChunks: {
           'solana-web3': ['@solana/web3.js'],
@@ -41,7 +36,6 @@ export default defineConfig(({ mode }) => ({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['@solana/web3.js', '@solana/wallet-adapter-react'],
-    exclude: ['rpc-websockets', 'rpc-websockets/dist/lib/client', 'rpc-websockets/dist/lib/client/websocket.browser']
+    include: ['@solana/web3.js', '@solana/wallet-adapter-react', 'rpc-websockets'],
   }
 }));
