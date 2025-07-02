@@ -18,9 +18,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "rpc-websockets/dist/lib/client": "rpc-websockets/dist/lib/client.js",
-      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets/dist/lib/client.js",
-      "rpc-websockets/dist/lib/client/websocket": "rpc-websockets/dist/lib/client.js",
+      // Fix rpc-websockets imports by aliasing all problematic paths to the main package
+      "rpc-websockets/dist/lib/client": "rpc-websockets",
+      "rpc-websockets/dist/lib/client/websocket.browser": "rpc-websockets",
+      "rpc-websockets/dist/lib/client/websocket": "rpc-websockets",
     },
   },
   build: {
