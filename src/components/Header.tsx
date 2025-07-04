@@ -7,7 +7,7 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 sticky-header-fade border-b border-purple-800/30 px-4 py-4 transition-all duration-300">
       <div className="container mx-auto flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold gradient-text">
+        <Link to="/" className="text-2xl font-bold gradient-text mr-8">
           RugFast
         </Link>
         
@@ -36,7 +36,9 @@ export const Header = () => {
           </a>
         </nav>
 
-        <WalletMultiButton className="wallet-button-gradient" />
+        <div className="ml-8">
+          <WalletMultiButton className="wallet-button-gradient" />
+        </div>
       </div>
     </header>
   );
