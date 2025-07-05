@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { 
@@ -102,7 +103,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting token creation process...');
+    console.log('RugFast.net - Starting devnet token creation process...');
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -112,8 +113,8 @@ serve(async (req) => {
     // Parse request
     const { walletAddress, tokenData, transactionSignature }: CreateTokenRequest = await req.json();
     
-    console.log(`Creating token for wallet: ${walletAddress}`);
-    console.log(`Token data:`, tokenData);
+    console.log(`RugFast.net - Creating token for wallet: ${walletAddress}`);
+    console.log(`RugFast.net - Token data:`, tokenData);
 
     // Validate inputs with enhanced sanitization
     if (!walletAddress || !tokenData.name || !tokenData.symbol) {
@@ -146,12 +147,10 @@ serve(async (req) => {
       throw new Error('Rate limit exceeded: Only 1 token per wallet per minute allowed');
     }
 
-    // Initialize Solana connection with retry logic
+    // Initialize Solana connection with devnet explicitly
     const connection = await withRetry(async () => {
-      const conn = new Connection(
-        Deno.env.get('SOLANA_RPC_URL') || 'https://api.devnet.solana.com',
-        'confirmed'
-      );
+      const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
+      console.log('RugFast.net - Connected to Solana Devnet');
       
       // Test connection
       await conn.getLatestBlockhash();
@@ -169,13 +168,13 @@ serve(async (req) => {
     );
     const userWallet = new PublicKey(walletAddress);
 
-    console.log(`Fee wallet public key: ${feeWallet.publicKey.toBase58()}`);
-    console.log('Creating SPL token with retry logic...');
+    console.log(`RugFast.net - Fee wallet public key: ${feeWallet.publicKey.toBase58()}`);
+    console.log('RugFast.net - Creating SPL token on devnet with retry logic...');
 
     // Verify the fee wallet matches expected address
     const expectedFeeWallet = 'FTVkFUZRnQF7LxfNKE2dnCv4AJsMnMYUWYe3a6m1nwR7';
     if (feeWallet.publicKey.toBase58() !== expectedFeeWallet) {
-      console.warn(`Fee wallet mismatch. Expected: ${expectedFeeWallet}, Got: ${feeWallet.publicKey.toBase58()}`);
+      console.warn(`RugFast.net - Fee wallet mismatch. Expected: ${expectedFeeWallet}, Got: ${feeWallet.publicKey.toBase58()}`);
     }
 
     // Create the mint account with retry
@@ -191,7 +190,7 @@ serve(async (req) => {
       );
     });
 
-    console.log(`Token mint created: ${mint.toBase58()}`);
+    console.log(`RugFast.net - Token mint created on devnet: ${mint.toBase58()}`);
 
     // Create associated token account for the user with retry
     const userTokenAccount = await withRetry(async () => {
@@ -203,7 +202,7 @@ serve(async (req) => {
       );
     });
 
-    console.log(`User token account created: ${userTokenAccount.toBase58()}`);
+    console.log(`RugFast.net - User token account created: ${userTokenAccount.toBase58()}`);
 
     // Mint initial supply to user with retry
     await withRetry(async () => {
@@ -217,7 +216,7 @@ serve(async (req) => {
       );
     });
 
-    console.log(`Minted ${tokenData.supply} tokens to user account`);
+    console.log(`RugFast.net - Minted ${tokenData.supply} tokens to user account`);
 
     // Initialize Metaplex for metadata operations
     const metaplex = Metaplex.make(connection)
@@ -229,7 +228,7 @@ serve(async (req) => {
 
     // Create metadata if image is provided
     if (tokenData.imageUrl) {
-      console.log('Creating token metadata...');
+      console.log('RugFast.net - Creating token metadata on devnet...');
       try {
         const { nft } = await withRetry(async () => {
           return await metaplex.nfts().create({
@@ -243,16 +242,16 @@ serve(async (req) => {
         });
         
         metadataUri = nft.uri;
-        console.log('Metadata created:', metadataUri);
+        console.log('RugFast.net - Metadata created:', metadataUri);
       } catch (error) {
-        console.error('Metadata creation failed:', error);
+        console.error('RugFast.net - Metadata creation failed:', error);
         // Continue without metadata if it fails
       }
     }
 
     // Revoke authorities if requested
     if (tokenData.revokeMint) {
-      console.log('Revoking mint authority...');
+      console.log('RugFast.net - Revoking mint authority...');
       await withRetry(async () => {
         return await setAuthority(
           connection,
@@ -263,12 +262,12 @@ serve(async (req) => {
           null // Set to null to revoke
         );
       });
-      console.log('Mint authority revoked');
+      console.log('RugFast.net - Mint authority revoked');
     }
 
     // Revoke metadata authority using Metaplex
     if (tokenData.revokeMetadata && metadataUri) {
-      console.log('Revoking metadata authority...');
+      console.log('RugFast.net - Revoking metadata authority...');
       try {
         await withRetry(async () => {
           const nft = await metaplex.nfts().findByMint({ mintAddress: mint });
@@ -278,9 +277,9 @@ serve(async (req) => {
           });
         });
         metadataRevoked = true;
-        console.log('Metadata authority revoked');
+        console.log('RugFast.net - Metadata authority revoked');
       } catch (error) {
-        console.error('Metadata authority revocation failed:', error);
+        console.error('RugFast.net - Metadata authority revocation failed:', error);
         // Continue even if metadata revocation fails
       }
     }
@@ -289,12 +288,12 @@ serve(async (req) => {
     const mintInfo = await connection.getAccountInfo(mint);
     const mintAccount = await connection.getParsedAccountInfo(mint);
     
-    console.log('Verifying revocations on-chain...');
+    console.log('RugFast.net - Verifying revocations on-chain...');
     const actualMintAuthority = mintAccount.value?.data?.parsed?.info?.mintAuthority;
     const actualFreezeAuthority = mintAccount.value?.data?.parsed?.info?.freezeAuthority;
     
-    console.log('Actual mint authority:', actualMintAuthority);
-    console.log('Actual freeze authority:', actualFreezeAuthority);
+    console.log('RugFast.net - Actual mint authority:', actualMintAuthority);
+    console.log('RugFast.net - Actual freeze authority:', actualFreezeAuthority);
 
     // Store token in database with verification results
     const { data: tokenRecord, error: dbError } = await supabase
@@ -320,15 +319,16 @@ serve(async (req) => {
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
+      console.error('RugFast.net - Database error:', dbError);
       throw new Error(`Database error: ${dbError.message}`);
     }
 
-    console.log('Token created successfully:', tokenRecord);
+    console.log('RugFast.net - Token created successfully on devnet:', tokenRecord);
 
     return new Response(
       JSON.stringify({
         success: true,
+        network: 'devnet',
         token: {
           ...tokenRecord,
           mintAddress: mint.toBase58(),
@@ -346,13 +346,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Token creation error:', error);
+    console.error('RugFast.net - Token creation error:', error);
     
     const customMessage = getCustomErrorMessage(error as Error);
     
     return new Response(
       JSON.stringify({
         success: false,
+        network: 'devnet',
         error: customMessage,
         originalError: error.message
       }),

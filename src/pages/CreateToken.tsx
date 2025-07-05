@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
@@ -127,6 +126,8 @@ export const CreateToken = () => {
       throw new Error(`Insufficient SOL. Need ${FLAT_FEE_SOL} SOL, have ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
+    console.log('RugFast.net - Creating devnet payment transaction');
+
     // Create payment transaction
     const transaction = new Transaction().add(
       SystemProgram.transfer({
@@ -147,6 +148,7 @@ export const CreateToken = () => {
     // Wait for confirmation
     await connection.confirmTransaction(signature, 'confirmed');
     
+    console.log('RugFast.net - Devnet payment confirmed:', signature);
     return signature;
   };
 
@@ -193,23 +195,25 @@ export const CreateToken = () => {
     setCreationSteps(prev => prev.map(step => ({ ...step, status: 'pending' as const })));
 
     try {
+      console.log('RugFast.net - Starting devnet token creation process');
+      
       // Upload image if provided
       let imageUrl = null;
       if (imageFile) {
-        console.log('Uploading image...');
+        console.log('RugFast.net - Uploading image...');
         imageUrl = await uploadImage(imageFile);
       }
 
       // Step 1: Create and send payment transaction
       updateStepStatus('payment', 'loading');
-      console.log('Creating payment transaction...');
+      console.log('RugFast.net - Creating devnet payment transaction...');
       const paymentSignature = await createPaymentTransaction();
-      console.log('Payment transaction confirmed:', paymentSignature);
+      console.log('RugFast.net - Devnet payment transaction confirmed:', paymentSignature);
       updateStepStatus('payment', 'completed');
 
       // Step 2: Call edge function to create actual token
       updateStepStatus('mint', 'loading');
-      console.log('Calling token creation edge function...');
+      console.log('RugFast.net - Calling devnet token creation edge function...');
       const { data, error } = await supabase.functions.invoke('create-token', {
         body: {
           walletAddress: walletAddress,
@@ -233,14 +237,14 @@ export const CreateToken = () => {
       updateStepStatus('verification', 'completed');
 
       toast({
-        title: "Token Created Successfully! 🎉",
-        description: `${formData.name} (${formData.symbol}) has been launched for ${FLAT_FEE_SOL} SOL`,
+        title: "🎉 Devnet Token Created Successfully!",
+        description: `${formData.name} (${formData.symbol}) has been launched on devnet for ${FLAT_FEE_SOL} SOL`,
       });
 
       // Show verification status
       if (data.token.verificationStatus) {
         const { mintRevoked, freezeRevoked, metadataRevoked } = data.token.verificationStatus;
-        console.log('Verification Status:', { mintRevoked, freezeRevoked, metadataRevoked });
+        console.log('RugFast.net - Devnet Verification Status:', { mintRevoked, freezeRevoked, metadataRevoked });
         
         if (formData.revokeMint && !mintRevoked) {
           toast({
@@ -251,11 +255,11 @@ export const CreateToken = () => {
         }
       }
 
-      console.log('Token created:', data.token);
+      console.log('RugFast.net - Devnet token created:', data.token);
       navigate(`/token/${data.token.id}`);
 
     } catch (error) {
-      console.error('Error creating token:', error);
+      console.error('RugFast.net - Error creating devnet token:', error);
       
       // Update failed step
       const currentStep = creationSteps.find(step => step.status === 'loading');
@@ -263,10 +267,10 @@ export const CreateToken = () => {
         updateStepStatus(currentStep.id, 'error');
       }
       
-      let errorMessage = 'Failed to create token. Please try again.';
+      let errorMessage = 'Failed to create token on devnet. Please try again.';
       if (error instanceof Error) {
         if (error.message.includes('Insufficient SOL')) {
-          errorMessage = error.message;
+          errorMessage = error.message + ' (Get devnet SOL from faucet)';
         } else if (error.message.includes('Rate limit')) {
           errorMessage = 'You can only create 1 token per minute. Please wait and try again.';
         } else if (error.message.includes('Network timeout')) {
@@ -275,7 +279,7 @@ export const CreateToken = () => {
       }
       
       toast({
-        title: "Creation Failed",
+        title: "Devnet Creation Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -303,7 +307,13 @@ export const CreateToken = () => {
         <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
             <CardTitle className="text-2xl text-center gradient-text">Create Your Token</CardTitle>
-            <p className="text-center text-gray-400">Launch fee: {FLAT_FEE_SOL} SOL (flat rate)</p>
+            {/* Devnet Testing Indicator */}
+            <div className="text-center">
+              <span className="inline-block bg-orange-500 text-black px-3 py-1 rounded-full text-sm font-semibold mb-2">
+                🧪 DEVNET TESTING MODE
+              </span>
+              <p className="text-center text-gray-400">Launch fee: {FLAT_FEE_SOL} SOL (devnet - get from faucet)</p>
+            </div>
             <WalletConnectionStatus />
           </CardHeader>
           
@@ -319,10 +329,20 @@ export const CreateToken = () => {
               </p>
             </div>
 
+            {/* Devnet Instructions */}
+            <div className="mb-6 p-4 bg-orange-900/30 border border-orange-500 rounded-lg">
+              <h3 className="text-orange-400 font-bold text-lg mb-2">🧪 Devnet Testing Instructions</h3>
+              <ul className="text-orange-200 text-sm space-y-1">
+                <li>• Get devnet SOL from <a href="https://faucet.solana.com/" target="_blank" rel="noopener noreferrer" className="underline">Solana Faucet</a></li>
+                <li>• Tokens created here are for testing only</li>
+                <li>• Fee wallet: FTVkFUZRnQF7LxfNKE2dnCv4AJsMnMYUWYe3a6m1nwR7</li>
+              </ul>
+            </div>
+
             {/* Token Creation Progress */}
             {creating && (
               <div className="mb-6 p-4 bg-gray-800 border border-gray-600 rounded-lg">
-                <h3 className="text-white font-semibold mb-3">Creating Your Token...</h3>
+                <h3 className="text-white font-semibold mb-3">Creating Your Devnet Token...</h3>
                 <LoadingSteps steps={creationSteps} />
               </div>
             )}
@@ -458,9 +478,9 @@ export const CreateToken = () => {
               </div>
 
               <div className="border border-gray-600 rounded-lg p-4 bg-gray-800">
-                <h3 className="font-semibold mb-2 text-white">Simple Flat Rate Pricing:</h3>
+                <h3 className="font-semibold mb-2 text-white">Devnet Testing Pricing:</h3>
                 <ul className="text-sm text-gray-300 space-y-1">
-                  <li className="font-semibold text-cyan-400">• Total: {FLAT_FEE_SOL} SOL (includes all features)</li>
+                  <li className="font-semibold text-cyan-400">• Total: {FLAT_FEE_SOL} SOL (devnet - free from faucet)</li>
                   <li className="text-xs text-gray-400">• Token creation, metadata, and all revoke options included</li>
                 </ul>
               </div>
@@ -470,9 +490,9 @@ export const CreateToken = () => {
                 disabled={creating || !isAuthenticated || connecting}
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3"
               >
-                {creating ? 'Creating Token...' : 
+                {creating ? 'Creating Devnet Token...' : 
                connecting ? 'Connecting Wallet...' :
-               `Launch for ${FLAT_FEE_SOL} SOL`}
+               `Launch on Devnet for ${FLAT_FEE_SOL} SOL`}
             </Button>
             
             {!isAuthenticated && !connecting && (

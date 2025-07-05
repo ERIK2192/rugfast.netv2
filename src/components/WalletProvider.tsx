@@ -8,18 +8,13 @@ import { clusterApiUrl } from '@solana/web3.js';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 export const AppWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  // Use mainnet for production, devnet for testing
-  const network: WalletAdapterNetwork = process.env.NODE_ENV === 'production' 
-    ? WalletAdapterNetwork.Mainnet 
-    : WalletAdapterNetwork.Devnet;
+  // Force devnet for testing - will be configurable for production
+  const network: WalletAdapterNetwork = WalletAdapterNetwork.Devnet;
     
   const endpoint = useMemo(() => {
-    // In production, use a reliable RPC endpoint
-    if (network === WalletAdapterNetwork.Mainnet) {
-      return 'https://api.mainnet-beta.solana.com';
-    }
-    return clusterApiUrl(network);
-  }, [network]);
+    // Use devnet for testing
+    return 'https://api.devnet.solana.com';
+  }, []);
 
   const wallets = useMemo(
     () => [
@@ -28,6 +23,8 @@ export const AppWalletProvider: FC<{ children: ReactNode }> = ({ children }) => 
     ],
     []
   );
+
+  console.log('RugFast.net - Using Solana Devnet:', endpoint);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
