@@ -16,6 +16,7 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        console.log('RugFast.net - Auth state changed:', event, session ? 'Session active' : 'No session');
       }
     );
 
@@ -28,11 +29,24 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Auto-authenticate when wallet connects
+  useEffect(() => {
+    const autoAuthenticate = async () => {
+      if (connected && publicKey && !session) {
+        console.log('RugFast.net - Auto-authenticating wallet connection...');
+        await signInWithWallet();
+      }
+    };
+
+    autoAuthenticate();
+  }, [connected, publicKey, session]);
+
   const signInWithWallet = async () => {
     if (!publicKey) return { error: 'No wallet connected' };
     
     try {
       const walletAddress = publicKey.toBase58();
+      console.log('RugFast.net - Signing in wallet:', walletAddress);
       
       const { data, error } = await supabase.auth.signInAnonymously();
       
@@ -43,10 +57,12 @@ export const useAuth = () => {
           id: data.user.id,
           wallet_address: walletAddress,
         });
+        console.log('RugFast.net - Wallet authenticated successfully');
       }
 
       return { data, error: null };
     } catch (error) {
+      console.error('RugFast.net - Auth error:', error);
       return { error: error as Error };
     }
   };

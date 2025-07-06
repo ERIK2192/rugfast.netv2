@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { WalletStatus } from './WalletStatus';
 
 export const Header = () => {
   return (
@@ -37,7 +37,7 @@ export const Header = () => {
         </nav>
 
         <div className="ml-8">
-          <WalletMultiButton className="wallet-button-gradient" />
+          <WalletStatus />
         </div>
       </div>
     </header>

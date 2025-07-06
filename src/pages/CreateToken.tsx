@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { WalletConnectionStatus } from '@/components/WalletConnectionStatus';
+import { BalanceDisplay } from '@/components/BalanceDisplay';
 import { 
   Transaction, 
   SystemProgram, 
@@ -44,6 +45,7 @@ export const CreateToken = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+  const [userBalance, setUserBalance] = useState<number | null>(null);
   const [creationSteps, setCreationSteps] = useState<Step[]>([
     { id: 'payment', label: 'Processing payment', status: 'pending' },
     { id: 'mint', label: 'Creating token mint', status: 'pending' },
@@ -57,6 +59,24 @@ export const CreateToken = () => {
 
   // Fixed flat fee of 0.25 SOL
   const FLAT_FEE_SOL = 0.25;
+
+  // Check user balance when wallet connects
+  React.useEffect(() => {
+    const checkBalance = async () => {
+      if (publicKey && connected) {
+        try {
+          const balance = await connection.getBalance(publicKey);
+          const balanceInSol = balance / LAMPORTS_PER_SOL;
+          setUserBalance(balanceInSol);
+          console.log('RugFast.net - User devnet balance:', balanceInSol, 'SOL');
+        } catch (error) {
+          console.error('RugFast.net - Error fetching balance:', error);
+        }
+      }
+    };
+
+    checkBalance();
+  }, [publicKey, connected, connection]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -161,10 +181,10 @@ export const CreateToken = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!connected || !isAuthenticated || !walletAddress || !publicKey) {
+    if (!connected || !publicKey) {
       toast({
         title: "Wallet Required",
-        description: "Please connect and sign in with your wallet",
+        description: "Please connect your wallet to create tokens",
         variant: "destructive",
       });
       return;
@@ -184,6 +204,16 @@ export const CreateToken = () => {
       toast({
         title: "Invalid Symbol",
         description: "Symbol must be 8 characters or less",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check balance
+    if (userBalance === null || userBalance < FLAT_FEE_SOL) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need at least ${FLAT_FEE_SOL} SOL. Get devnet SOL from the faucet.`,
         variant: "destructive",
       });
       return;
@@ -301,6 +331,9 @@ export const CreateToken = () => {
     );
   }
 
+  const hasInsufficientBalance = userBalance !== null && userBalance < FLAT_FEE_SOL;
+  const canCreateToken = connected && !hasInsufficientBalance && !creating;
+
   return (
     <div className="min-h-screen bg-black text-white py-8 px-4">
       <div className="container mx-auto max-w-2xl">
@@ -314,7 +347,24 @@ export const CreateToken = () => {
               </span>
               <p className="text-center text-gray-400">Launch fee: {FLAT_FEE_SOL} SOL (devnet - get from faucet)</p>
             </div>
-            <WalletConnectionStatus />
+            
+            {/* Wallet Status and Balance */}
+            <div className="flex flex-col items-center space-y-2">
+              <WalletConnectionStatus />
+              {connected && <BalanceDisplay />}
+            </div>
+
+            {hasInsufficientBalance && (
+              <div className="text-center p-3 bg-red-900/30 border border-red-500 rounded-lg">
+                <p className="text-red-400 font-semibold">Insufficient Balance</p>
+                <p className="text-red-300 text-sm">
+                  You need at least {FLAT_FEE_SOL} SOL. Get devnet SOL from the{' '}
+                  <a href="https://faucet.solana.com/" target="_blank" rel="noopener noreferrer" className="underline">
+                    Solana Faucet
+                  </a>
+                </p>
+              </div>
+            )}
           </CardHeader>
           
           <CardContent>
@@ -487,17 +537,18 @@ export const CreateToken = () => {
 
               <Button
                 type="submit"
-                disabled={creating || !isAuthenticated || connecting}
+                disabled={!canCreateToken || connecting}
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3"
               >
                 {creating ? 'Creating Devnet Token...' : 
                connecting ? 'Connecting Wallet...' :
+               hasInsufficientBalance ? `Need ${FLAT_FEE_SOL} SOL - Get from Faucet` :
                `Launch on Devnet for ${FLAT_FEE_SOL} SOL`}
             </Button>
             
-            {!isAuthenticated && !connecting && (
+            {!connected && !connecting && (
               <p className="text-center text-red-400 text-sm">
-                Please sign in with your wallet to create tokens
+                Please connect your wallet to create tokens
               </p>
             )}
             </form>
